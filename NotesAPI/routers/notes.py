@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import FastAPI,Depends,HTTPException,Path,APIRouter
 from ..database import Base,SessionLocal,engine
 from sqlalchemy.orm import Session
-from ..models import Notes
+from ..models import Notes,Users
 from pydantic import BaseModel,Field
 from starlette import status
 from .auth import get_current_user
@@ -29,14 +29,23 @@ class NotesMaking(BaseModel):
     completed: bool = False
 
 @router.get("/")
-def get_all_notes(db:db_depedndency):
-    notes_model = db.query(Notes).all()
+def get_all_notes(  
+                  user:user_dependency,
+                  db:db_depedndency
+                  ):
+    if not user:
+        raise HTTPException(status_code=401,detail='Authentication Failed')
+    notes_model = db.query(Notes).filter(Notes.owner_id == user.get('id')).all()
     return notes_model
 
 @router.get('/{notes_id}',status_code=status.HTTP_200_OK)
-def get_notes_by_id(db:db_depedndency,
+def get_notes_by_id(
+                    user:user_dependency,
+                    db:db_depedndency,
                     notes_id:int=Path(gt=0)):
-    notes_model = db.query(Notes).filter(Notes.id == notes_id).first()
+    if not user:
+        raise HTTPException(status_code=401,detail='Authentication Failed')
+    notes_model = db.query(Notes).filter(Notes.id == notes_id).filter(Notes.owner_id == user.get('id')).first()
     if not notes_model:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return notes_model
@@ -57,11 +66,14 @@ def create_notes(
 
 @router.put("/update_note/{notes_id}", status_code=status.HTTP_200_OK)
 def update_notes(
+    user:user_dependency,
     db: db_depedndency,
     notes_update: NotesMaking,
     notes_id: int = Path(gt=0)
 ):
-    notes_model = db.query(Notes).filter(Notes.id == notes_id).first()
+    if not user:
+        raise HTTPException(status_code=401,detail='Authentication Failed')
+    notes_model = db.query(Notes).filter(Notes.id == notes_id).filter(Notes.owner_id == user.get('id')).first()
     if not notes_model:
         raise HTTPException(status_code=404, detail="Id Not Found")
 
@@ -76,10 +88,18 @@ def update_notes(
     return notes_model
 
 @router.delete('/delete_note/{notes_id}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_notes(db: db_depedndency, notes_id: int = Path(gt=0)):
-    notes_model = db.query(Notes).filter(Notes.id == notes_id).first()
+async def delete_notes(
+    user: user_dependency,
+    db: db_depedndency,
+    notes_id: int = Path(gt=0)
+):
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication Failed")
+    
+    notes_model = db.query(Notes).filter(Notes.id == notes_id).filter(Notes.owner_id == user.get('id')).first()
+    
     if not notes_model:
-        raise HTTPException(status_code=404, detail="Id not found")
+        raise HTTPException(status_code=404, detail="Note not found")
     
     db.delete(notes_model)
     db.commit()
