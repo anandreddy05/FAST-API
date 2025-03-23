@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..models import Notes
 from pydantic import BaseModel,Field
 from starlette import status
+from .auth import get_current_user
 
 router = APIRouter(
     tags=['notes']
@@ -18,6 +19,8 @@ def get_db():
         db.close()
 
 db_depedndency = Annotated[Session,Depends(get_db)]
+user_dependency = Annotated[dict,Depends(get_current_user)]
+
 
 class NotesMaking(BaseModel):
     title: str = Field(min_length=3)
@@ -39,9 +42,14 @@ def get_notes_by_id(db:db_depedndency,
     return notes_model
 
 @router.post("/create_notes",status_code=status.HTTP_201_CREATED)
-def create_notes(db:db_depedndency,
-                 insert_notes: NotesMaking):
-    notes_model = Notes(**insert_notes.model_dump())
+def create_notes(
+                user:user_dependency,
+                db:db_depedndency,
+                insert_notes: NotesMaking
+                ):
+    if not user:
+        raise HTTPException(status_code=401,detail='Authentication Failed')
+    notes_model = Notes(**insert_notes.model_dump(),owner_id=user.get('id'))
     db.add(notes_model)
     db.commit()
     db.refresh(notes_model)
