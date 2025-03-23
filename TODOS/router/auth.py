@@ -1,8 +1,8 @@
 from fastapi import APIRouter,Depends,HTTPException
 from pydantic import BaseModel
-from models import Users
+from ..models import Users
 from passlib.context import CryptContext
-from database import SessionLocal
+from ..database import SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
 from starlette import status
@@ -29,6 +29,7 @@ class CreateUserRequest(BaseModel):
     email: str
     first_name: str
     last_name: str
+    phone_number: str
     password: str
     role: str
 
@@ -83,6 +84,7 @@ async def create_user(db:db_dependency,
         username = create_user_request.username,
         first_name = create_user_request.first_name,
         last_name = create_user_request.last_name,
+        phone_number = create_user_request.phone_number,
         role = create_user_request.role,
         hashed_password = bcrypt_context.hash(create_user_request.password),
         is_active = True,

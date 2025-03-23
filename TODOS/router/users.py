@@ -1,8 +1,8 @@
 from typing import Annotated
 from sqlalchemy.orm import Session
 from fastapi import APIRouter,Depends,HTTPException,status,Path
-from database import SessionLocal
-from models import Todos,Users
+from ..database import SessionLocal
+from ..models import Todos,Users
 from pydantic import BaseModel,Field
 from .auth import get_current_user
 from passlib.context import CryptContext
@@ -59,3 +59,14 @@ async def change_password(
     db.refresh(user_details) 
 
     return {"message": "Password updated successfully"}
+
+@router.put("/phone_number/{phone_number}",status_code=status.HTTP_204_NO_CONTENT)
+async def update_phone_number(db:db_dependency,
+                              user:user_dependency,
+                              phone_number: str):
+    if not user:
+        raise HTTPException(status_code=402,detail="Authentication Failed")
+    user_model = db.query(Users).filter(Users.id == user.get('id')).first()
+    user_model.phone_number = phone_number
+    db.add(user_model)
+    db.commit()
