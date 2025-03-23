@@ -35,7 +35,7 @@ def get_all_notes(
                   ):
     if not user:
         raise HTTPException(status_code=401,detail='Authentication Failed')
-    notes_model = db.query(Notes).filter(Notes.owner_id == user.get('id')).all()
+    notes_model = db.query(Notes).filter(Notes.id == user.get('id')).all()
     return notes_model
 
 @router.get('/{notes_id}',status_code=status.HTTP_200_OK)
