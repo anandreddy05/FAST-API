@@ -40,7 +40,7 @@ python -m venv env
 ## Install Dependencies:
 
 ``` bash
-pip install fastapi==0.115.8 uvicorn[standard]==0.34.0 SQLAlchemy==2.0.38 pydantic==2.10.6 python-jose==3.3.0 passlib[bcrypt]==1.7.4
+pip install fastapi==0.115.8 uvicorn[standard]==0.34.0 SQLAlchemy==2.0.38 pydantic==2.10.6 python-jose==3.3.0 passlib[bcrypt]==1.7.4 pytest
 ```
 
 ## Running the Application
