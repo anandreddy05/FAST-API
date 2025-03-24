@@ -6,7 +6,10 @@ from ..models import Todos
 from pydantic import BaseModel,Field
 from .auth import get_current_user
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/todos',
+    tags=['todos']
+)
 
 def get_db():
     db = SessionLocal()
@@ -30,7 +33,7 @@ async def read_all(user: user_dependency,db:db_dependency):
         raise HTTPException(status_code=401,detail="Authentication Failed")
     return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
 
-@router.get("/todo/{todo_id}",status_code=status.HTTP_200_OK)
+@router.get("/{todo_id}",status_code=status.HTTP_200_OK)
 async def read_todo(user:user_dependency,
                     db:db_dependency,
                     todo_id:int=Path(gt=0)):
@@ -42,7 +45,7 @@ async def read_todo(user:user_dependency,
         return todo_model
     raise HTTPException(status_code=404,detail="To Do not found")
 
-@router.post("/todo",status_code=status.HTTP_201_CREATED)
+@router.post("/",status_code=status.HTTP_201_CREATED)
 async def create_todo(user: user_dependency,
                       db:db_dependency,
                       insert_todo: TodoRequest):
@@ -54,7 +57,7 @@ async def create_todo(user: user_dependency,
     db.add(todo_model)
     db.commit()
     
-@router.put("/todo/{todo_id}",status_code=status.HTTP_204_NO_CONTENT)
+@router.put("/{todo_id}",status_code=status.HTTP_204_NO_CONTENT)
 async def update_todouser(user: user_dependency,
                           db:db_dependency,
                           todo_request: TodoRequest,
@@ -73,7 +76,7 @@ async def update_todouser(user: user_dependency,
     db.add(todo_model)
     db.commit()
 
-@router.delete("/todo/{todo_id}",status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{todo_id}",status_code=status.HTTP_204_NO_CONTENT)
 async def delete_todo(user: user_dependency,
                       db:db_dependency,
                       todo_id: int=Path(gt=0)):
